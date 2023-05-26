@@ -1,0 +1,170 @@
+import io.restassured.path.json.JsonPath;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import static io.restassured.RestAssured.given;
+
+public class Ejercicios1 {
+
+@Test
+public void ejercicio1() throws InterruptedException {
+System.setProperty("webdriver.chrome.driver", "drivers/chromedriver");
+
+ChromeOptions options = new ChromeOptions();
+options.addArguments("--remote-allow-origins=*");
+
+WebDriver driver = new ChromeDriver(options);
+driver.get("https://www.demoblaze.com/index.html");
+
+//agrego espera implicita para todos los elementos...
+driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+
+driver.findElement(By.linkText("Sign up")).click();
+
+// Generate random int value from min to max
+int random_int = (int)Math.floor(Math.random() * 100000);
+// Printing the generated random numbers
+System.out.println(random_int);
+
+String email = "testingMay" + random_int + "@test.com";
+String password = "holamundo";
+
+driver.findElement(By.id("sign-username")).sendKeys(email);
+driver.findElement(By.id("sign-password")).sendKeys(password);
+driver.findElement(By.xpath("(//button)[6]")).click();
+
+Thread.sleep(3000);
+driver.switchTo().alert().accept();
+
+driver.findElement(By.linkText("Log in")).click();
+
+Thread.sleep(4000);
+
+driver.findElement(By.id("loginusername")).sendKeys(email);
+driver.findElement(By.id("loginpassword")).sendKeys(password);
+driver.findElement(By.xpath("//button[@onclick='logIn()']")).click();
+Thread.sleep(4000);
+
+String producto = "Sony vaio i5";
+
+driver.findElement(By.linkText(producto)).click();
+
+Thread.sleep(4000);
+driver.findElement(By.linkText("Add to cart")).click();
+
+Thread.sleep(4000);
+driver.switchTo().alert().accept();
+
+Thread.sleep(4000);
+driver.findElement(By.linkText("Cart")).click();
+Thread.sleep(4000);
+
+List<WebElement> tabla = driver.findElements(By.tagName("td"));
+
+boolean encontroLaptop = false;
+
+for (WebElement td : tabla){
+if (td.getText().equals(producto)){
+encontroLaptop = true;
+}
+}
+
+Assert.assertTrue(encontroLaptop);
+}
+
+@Test
+public void ejercicio2() {
+String pet1 = "{\n" +
+" \"id\": 0,\n" +
+" \"category\": {\n" +
+" \"id\": 0,\n" +
+" \"name\": \"string\"\n" +
+" },\n" +
+" \"name\": \"doggie\",\n" +
+" \"photoUrls\": [\n" +
+" \"string\"\n" +
+" ],\n" +
+" \"tags\": [\n" +
+" {\n" +
+" \"id\": 0,\n" +
+" \"name\": \"string\"\n" +
+" }\n" +
+" ],\n" +
+" \"status\": \"available\"\n" +
+"}";
+
+String postResponseInfo =
+given()
+.header("Content-Type", "application/json")
+.body(pet1)
+.when()
+.post("https://petstore.swagger.io/v2/pet" )
+.then()
+.assertThat().statusCode(200)
+.extract().asString();
+
+
+Assert.assertTrue(postResponseInfo.contains("name\":\"doggie"));
+
+JsonPath js = new JsonPath(postResponseInfo);
+Long petId = js.get("id");
+System.out.println(petId);
+
+// GET REQUEST
+
+String getResponseInfo =
+given()
+.header("Content-Type", "application/json")
+.when()
+.get("https://petstore.swagger.io/v2/pet/"+String.valueOf(petId) )
+.then()
+.assertThat().statusCode(200)
+.extract().asString();
+
+System.out.println(getResponseInfo);
+Assert.assertTrue(getResponseInfo.contains("name\":\"doggie"));
+Assert.assertTrue(getResponseInfo.contains("status\":\"available"));
+
+// PUT REQUEST
+String bodyUpdated = "{\n" +
+" \"id\": 0,\n" +
+" \"category\": {\n" +
+" \"id\": 0,\n" +
+" \"name\": \"string\"\n" +
+" },\n" +
+" \"name\": \"total1\",\n" +
+" \"photoUrls\": [\n" +
+" \"string\"\n" +
+" ],\n" +
+" \"tags\": [\n" +
+" {\n" +
+" \"id\": 0,\n" +
+" \"name\": \"string\"\n" +
+" }\n" +
+" ],\n" +
+" \"status\": \"available\"\n" +
+"}";
+
+String putResponseInfo =
+given()
+.header("Content-Type", "application/json")
+.when()
+.body(bodyUpdated)
+.put("https://petstore.swagger.io/v2/pet/"+String.valueOf(petId) )
+.then()
+.assertThat().statusCode(200)
+.extract().asString();
+
+System.out.println("PUT");
+System.out.println(putResponseInfo);
+Assert.assertTrue(putResponseInfo.contains("name\":\"total1"));
+}
+}
